@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Traffic Tisséo</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+	<body>
+		Bienvenue sur votre site d'info-traffic préféré!
+		<br/><br/>
+		<form action="calculHoraire" method="GET" name="frm_horraire_ligne_arrêt">
+			Veuillez indiquer la ligne sur laquelle vous voulez aller: 
+				<input type="text" name="numLigne"/><br/>
+			Puis veuillez indiquer l'arrêt où vous voulez vous arrêter: 
+			<input type="text" name="arret"/><br/>
+			<input type="submit"/>
+		</form>
+		<br/><br/>
+		<form action ="dispoVelo" method ="GET" name="frm_disponibilite_velo">
+			Peut être voulez vous prendre une vélo?<br/>
+			<input type="text" name="lieu"/><br/>
+			<input type="submit"/>
+		</form>
+		<br/><br/>
+		Trouver le trajet le plus rapide
+		<form action = "trajetPlusRapide" method = "GET" name = "frm_trajet">
+			<input type="text" name = "adresse"/><br/>
+			<input type="submit"/>
+		</form>
+	</body>
+</html>
