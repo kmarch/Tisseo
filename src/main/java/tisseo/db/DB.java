@@ -65,7 +65,7 @@ public class DB {
 	}
 	
 	public ArrayList<Ligne> getLignes() {
-		String requete = "select numligne, nombre from ligne";
+		String requete = "select numligne, nombre from ligne order by nombre desc";
 		ArrayList<Ligne> listeLignes = new ArrayList<Ligne>();
 		try {
 			ResultSet resultatQ = st.executeQuery(requete);
@@ -81,22 +81,37 @@ public class DB {
 	}
 	
 	public void update(Ligne aUpdate) {
-		String requete = String.format("update ligne set nombre = %s where " +
-				"numligne = %s", aUpdate.getLike(), aUpdate.getId());
+		String requete = String.format("update ligne set nombre = '%s' where " +
+				"numligne = '%s'", aUpdate.getLike(), aUpdate.getId());
 		try {
 			st.executeQuery(requete);
 		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 	}
 	
+	public Ligne getLigne(String id) {
+		String requete = String.format("select numLigne, nombre from ligne" +
+				" where numLigne = '%s' ",id);
+		Ligne resultat = null;
+		try {
+			System.out.println(requete);
+			ResultSet resultatQ = st.executeQuery(requete);
+			resultatQ.next();
+			resultat = new Ligne(resultatQ.getString("numLigne"),
+					Integer.parseInt(resultatQ.getString("nombre")));
+		} catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return resultat;
+	}
+	
 	public void insere(Ligne aInsere) {
-		String requete = String.format("insert into ligne values(%s, %s)",
+		String requete = String.format("insert into ligne values('%s', '%s')",
 				aInsere.getId(), aInsere.getLike());
 		try {
+			System.out.println(requete);
 			st.executeQuery(requete);
 		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 	}
 

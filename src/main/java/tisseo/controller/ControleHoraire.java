@@ -25,7 +25,7 @@ import tisseo.request.RequestVelo;
 
 @Controller
 @Configuration
-public class ControlleHorraire {
+public class ControleHoraire {
 	
 	private final String POS_BBOX = "1.461593%2C43.557055%2C1.467988%2C43.570054";
 	private final double VITESSE_BUS = 0.83;//(km/s)
@@ -78,13 +78,35 @@ public class ControlleHorraire {
 		for(int i = 0; i < listeLignesBD.size(); i++) {
 			resultat += "ligne " + listeLignesBD.get(i).getId() + ":" + 
 					listeLignesBD.get(i).getLike()+ " likes " +
-					"<IMG SRC='src/main/ressources/green-plus-sign-md.png'/> " +
-					"<IMG SRC='src/main/ressources/forbidden.png'/> " +
+					"<a href ='incrementeLigne?id=" + listeLignesBD.get(i).getId()+
+					"'><IMG SRC='green-plus-sign-md.png'/> </a>" +
+					"<a href ='decrementeLigne?id=" + listeLignesBD.get(i).getId()+
+					"'><IMG SRC='forbidden.png'/></a> " +
 					"<BR/>";  
 		}
 		baseLignes.close();
 		model.addAttribute("liste", resultat);
 		return "listeAllLignes";
+	}
+	
+	@RequestMapping("/incrementeLigne")
+	public String incrementeLigne(@RequestParam(value="id", required=true) String id,
+			Model model) {
+		DB baseLigne = new DB(URL, NOM_BASE, PWD); 
+		Ligne ligne = baseLigne.getLigne(id);
+		ligne.incr();
+		baseLigne.update(ligne);
+		return "index";
+	}
+	
+	@RequestMapping("/decrementeLigne")
+	public String decrementeLigne(@RequestParam(value="id", required=true) String id,
+			Model model) {
+		DB baseLigne = new DB(URL, NOM_BASE, PWD); 
+		Ligne ligne = baseLigne.getLigne(id);
+		ligne.decr();
+		baseLigne.update(ligne);
+		return "index";
 	}
 	
 	@RequestMapping("/dispoVelo")
