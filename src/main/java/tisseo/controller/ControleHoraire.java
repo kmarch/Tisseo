@@ -28,6 +28,8 @@ import tisseo.request.RequestVelo;
 public class ControleHoraire {
 	
 	private final String POS_BBOX = "1.461593%2C43.557055%2C1.467988%2C43.570054";
+	private final double POS_X = 1.466170;
+	private final double POS_Y = 43.562881;
 	private final double VITESSE_BUS = 0.83;//(km/s)
 	public final static String URL = "jdbc:postgresql:Tisseo";
 	public final static String NOM_BASE = "postgres";
@@ -114,7 +116,11 @@ public class ControleHoraire {
 			Model model) {
 		RequestVelo requete = new RequestVelo();
 		String disponibilite = requete.getResults(lieu);
-		model.addAttribute("dispo", disponibilite);
+		if(disponibilite != null) {
+			model.addAttribute("dispo", disponibilite);
+		} else {
+			model.addAttribute("dispo", "Aucun vélo disponible pour cet endroid");
+		}
 		return "dispoVelo";
 	}
 	
@@ -166,20 +172,20 @@ public class ControleHoraire {
 		String plusCourt = null;
 		String nouvelleCle;
 		String duree;
+		RequestVelo requeteVelo;
 		int nouveauTemps, nbSeconde = 0;
 		double plusProche = 0;//distance
 		double courrante;
 		double temps = 0.0;
 		Double [] coord1;
 		RequestTemps requete;
-		System.out.println("taiille " + listeLigneArretChoisi.size() +" " + listeArretProximite.size());
 		for (Map.Entry<String, String> entry : listeLigneArretChoisi.entrySet()) {
 			coord1 = getCoord(entry.getValue());
 			for (Map.Entry<String, String> entry2 : listeArretProximite.entrySet()) {
 				if(plusCourt == null) {
 					resultat = entry2;
 					plusCourt = entry2.getKey();
-					Double [] coord2 = getCoord(entry2.getValue());
+					Double [] coord2 = getCoord(entry.getValue());
 					plusProche = CalculPosition.distanceVolOiseauEntre2PointsSansPrécision(
 							coord1[0], coord1[1], coord2[0], coord2[1]);
 					requete = new RequestTemps(id);
@@ -188,14 +194,15 @@ public class ControleHoraire {
 					nbSeconde += plusProche/ VITESSE_BUS;
 				} else {
 					nouvelleCle = entry2.getKey();
-					Double [] coord2 = getCoord(entry2.getValue());
+					Double [] coord2 = getCoord(entry.getValue());
 					courrante =  CalculPosition.distanceVolOiseauEntre2PointsSansPrécision(
 							coord1[0], coord1[1], coord2[0], coord2[1]);
 					requete = new RequestTemps(id);
 					duree = requete.getResults(entry.getKey().split("[:]")[1]);
 					nouveauTemps = getAttenteSeconde(duree);
 					nouveauTemps += courrante/VITESSE_BUS;
-					if(nouveauTemps > -1 && nouveauTemps < nbSeconde) {
+					if(entry2.getKey().split("[:]")[1].equals(entry.getKey().split("[:]")[1]) && 
+							nouveauTemps > -1 && nouveauTemps < nbSeconde) {
 						plusCourt = entry2.getKey();
 						nbSeconde = nouveauTemps;
 						resultat = entry2;
@@ -206,7 +213,7 @@ public class ControleHoraire {
 		if(resultat== null) {
 			return null;
 		} 
-		System.out.println(resultat.getKey() +"aa");
+		System.out.println(new RequestVelo().getListeVelo(POS_X, POS_Y));
 		return resultat.getKey().split("[:]")[1];
 	}
 

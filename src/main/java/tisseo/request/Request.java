@@ -32,7 +32,6 @@ public abstract class Request {
 	         //Le parsing est terminé ;)
 
 	         document = sxb.build(genRequest());
-	         System.out.println(genRequest());
 	      }
 	      catch(Exception e){
 	    	  System.out.println("erreur xml");

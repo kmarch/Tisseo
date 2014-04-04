@@ -28,7 +28,6 @@ public class RequestTemps extends Request{
 	    while(i.hasNext()) {
 		    Element courant = (Element)i.next();
 		    if(courant.getChild("line").getAttributeValue("shortName").equals(param))
-		    	System.out.println("param " + param + " "+ courant.getChild("line").getAttributeValue("shortName"));
 		    	resultat = courant.getAttributeValue("dateTime");
 	    }
 	     return resultat;
