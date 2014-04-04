@@ -19,13 +19,9 @@ import tisseo.db.Ligne;
 @EnableAutoConfiguration
 @ComponentScan
 public class Application {
-	public final static String URL = "jdbc:postgresql:Tisseo";
-	public final static String NOM_BASE = "postgres";
-	public final static String PWD = "romano";
 	
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
-        DB db = new DB(URL, NOM_BASE, PWD);
     }
     
     @Bean

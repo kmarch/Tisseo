@@ -4,23 +4,17 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.ektorp.support.CouchDbRepositorySupport;
-import org.jdom2.Element;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-
 import tisseo.CalculPosition;
+import tisseo.db.DB;
 import tisseo.db.Ligne;
 import tisseo.request.RequestArret;
 import tisseo.request.RequestBBox;
@@ -31,12 +25,7 @@ import tisseo.request.RequestVelo;
 
 @Controller
 @Configuration
-//@ComponentScan("tisseo.db")
 public class ControlleHorraire {
-
-   /* @Autowired
-    CouchDbRepositorySupport<Ligne> dbRepo;
-	*/
 	
 	private final String POS_BBOX = "1.461593%2C43.557055%2C1.467988%2C43.570054";
 	private final double VITESSE_BUS = 0.83;//(km/s)
@@ -63,6 +52,39 @@ public class ControlleHorraire {
 		    model.addAttribute("temps", getAttente(formatHeure));
 		}
 		return "attente";
+	}
+	
+	@RequestMapping("/listeAllLignes")
+	public String listeAllLignes(Model model) {
+		String resultat;
+		boolean estPresent;
+		DB baseLignes = new DB(URL, NOM_BASE, PWD);
+		RequestLigne requete = new RequestLigne();
+		ArrayList<Ligne> listeLignesBD = baseLignes.getLignes();
+		ArrayList<String> listeLignesTisseo = requete.getResults();
+		for(int i = 0; i < listeLignesTisseo.size(); i++) {
+			estPresent = false;
+			for(int j = 0; j< listeLignesBD.size() && !estPresent; j++) {
+				if(listeLignesBD.get(j).getId().equals(listeLignesTisseo.get(i))) {
+					estPresent = true;
+				}
+			}
+			if(!estPresent) {
+				baseLignes.insere(new Ligne(listeLignesTisseo.get(i)));
+				listeLignesBD.add(new Ligne(listeLignesTisseo.get(i)));
+			}
+		}
+		resultat = "";
+		for(int i = 0; i < listeLignesBD.size(); i++) {
+			resultat += "ligne " + listeLignesBD.get(i).getId() + ":" + 
+					listeLignesBD.get(i).getLike()+ " likes " +
+					"<IMG SRC='src/main/ressources/green-plus-sign-md.png'/> " +
+					"<IMG SRC='src/main/ressources/forbidden.png'/> " +
+					"<BR/>";  
+		}
+		baseLignes.close();
+		model.addAttribute("liste", resultat);
+		return "listeAllLignes";
 	}
 	
 	@RequestMapping("/dispoVelo")
@@ -100,13 +122,13 @@ public class ControlleHorraire {
 	Model model) {
 		HashMap<String,String> listeArretProximite;
 		HashMap<String,String> listeLigneArretChoisi;
-		String itineraire;
-		RequestBBox requete = new RequestBBox("bbox", POS_BBOX, null);
-		listeArretProximite = requete.getResultsListeLignesZone(null);
-		System.out.println("ici" +listeArretProximite);
 		HashMap<String,String> listeArgs = new HashMap<String,String>();
 		listeArgs.put("displayLines", "1");
 		listeArgs.put("displayCoordXY", "1");
+		String itineraire;
+		RequestBBox requete = new RequestBBox("bbox", POS_BBOX, listeArgs);
+		listeArretProximite = requete.getResultsListeLignesZone(null);
+		System.out.println(listeArretProximite.size()+"ici"+ listeArretProximite );
 		requete = new RequestBBox(null, null, listeArgs);
 		listeLigneArretChoisi = requete.getResultsListeLignesZone(id);
 		System.out.println(id+"la" + listeLigneArretChoisi);
@@ -115,6 +137,7 @@ public class ControlleHorraire {
 		return "reponseRapidite";
 	}
 
+	@SuppressWarnings("unused")
 	private String calculPlusCourt(HashMap<String, String> listeArretProximite,
 			HashMap<String, String> listeLigneArretChoisi, String id) {
 		Map.Entry<String, String> resultat = null;
@@ -127,18 +150,18 @@ public class ControlleHorraire {
 		double temps = 0.0;
 		Double [] coord1;
 		RequestTemps requete;
+		System.out.println("taiille " + listeLigneArretChoisi.size() +" " + listeArretProximite.size());
 		for (Map.Entry<String, String> entry : listeLigneArretChoisi.entrySet()) {
 			coord1 = getCoord(entry.getValue());
 			for (Map.Entry<String, String> entry2 : listeArretProximite.entrySet()) {
 				if(plusCourt == null) {
-					System.out.println("coucou" );
 					resultat = entry2;
 					plusCourt = entry2.getKey();
 					Double [] coord2 = getCoord(entry2.getValue());
 					plusProche = CalculPosition.distanceVolOiseauEntre2PointsSansPrécision(
 							coord1[0], coord1[1], coord2[0], coord2[1]);
-					requete = new RequestTemps(plusCourt.split("[;]")[0]);
-					duree = requete.getResults(null);
+					requete = new RequestTemps(id);
+					duree = requete.getResults(entry.getKey().split("[:]")[1]);
 					nbSeconde = getAttenteSeconde(duree);
 					nbSeconde += plusProche/ VITESSE_BUS;
 				} else {
@@ -146,11 +169,11 @@ public class ControlleHorraire {
 					Double [] coord2 = getCoord(entry2.getValue());
 					courrante =  CalculPosition.distanceVolOiseauEntre2PointsSansPrécision(
 							coord1[0], coord1[1], coord2[0], coord2[1]);
-					requete = new RequestTemps(nouvelleCle.split("[;]")[0]);
-					duree = requete.getResults(null);
+					requete = new RequestTemps(id);
+					duree = requete.getResults(entry.getKey().split("[:]")[1]);
 					nouveauTemps = getAttenteSeconde(duree);
 					nouveauTemps += courrante/VITESSE_BUS;
-					if(nouveauTemps < nbSeconde) {
+					if(nouveauTemps > -1 && nouveauTemps < nbSeconde) {
 						plusCourt = entry2.getKey();
 						nbSeconde = nouveauTemps;
 						resultat = entry2;
@@ -161,7 +184,8 @@ public class ControlleHorraire {
 		if(resultat== null) {
 			return null;
 		} 
-		return resultat.getKey().split("[;]")[1];
+		System.out.println(resultat.getKey() +"aa");
+		return resultat.getKey().split("[:]")[1];
 	}
 
 	public String getAttente(String formatHeure) {
@@ -189,17 +213,19 @@ public class ControlleHorraire {
 	public int getAttenteSeconde(String formatHeure) {
 		int heure, min, sec, annee, mois, jour;
 		Calendar tempsAttente;
-
-		annee = Integer.parseInt(formatHeure.split("[ ]")[0].split("[-]")[0]);
-		mois = Integer.parseInt(formatHeure.split("[ ]")[0].split("[-]")[1]);
-		jour = Integer.parseInt(formatHeure.split("[ ]")[0].split("[-]")[2]);
-		formatHeure =  formatHeure.split("[ ]")[1];
-		heure = Integer.parseInt(formatHeure.split("[:]")[0]);
-		min = Integer.parseInt(formatHeure.split("[:]")[1]);
-		sec = Integer.parseInt(formatHeure.split("[:]")[2]);
-		tempsAttente = GregorianCalendar.getInstance();
-		tempsAttente.set(annee, mois-1,jour,heure, min, sec);
-		return (int) ((tempsAttente.getTime().getTime() -Calendar.getInstance().getTime().getTime())/1000);
+		if(formatHeure != null) {
+			annee = Integer.parseInt(formatHeure.split("[ ]")[0].split("[-]")[0]);
+			mois = Integer.parseInt(formatHeure.split("[ ]")[0].split("[-]")[1]);
+			jour = Integer.parseInt(formatHeure.split("[ ]")[0].split("[-]")[2]);
+			formatHeure =  formatHeure.split("[ ]")[1];
+			heure = Integer.parseInt(formatHeure.split("[:]")[0]);
+			min = Integer.parseInt(formatHeure.split("[:]")[1]);
+			sec = Integer.parseInt(formatHeure.split("[:]")[2]);
+			tempsAttente = GregorianCalendar.getInstance();
+			tempsAttente.set(annee, mois-1,jour,heure, min, sec);
+			return (int) ((tempsAttente.getTime().getTime() -Calendar.getInstance().getTime().getTime())/1000);
+		}
+		return -1;
 	}
 	
 	public  Double[] getCoord(String param) {

@@ -1,5 +1,6 @@
 package tisseo.request;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -11,13 +12,16 @@ import tisseo.request.generation.GenereAPITisseo;
 
 public class RequestBBox extends Request {
 
+	public ArrayList<String> listeLigneMetro = new ArrayList<String>();
+
 	public RequestBBox(String arg, String argValue, Map<String,String> listeArgs) {
 		generateur = new GenereAPITisseo(listeArgs);
 		format="xml";
 		action ="stopPointsList";
 		this.arg = arg;
 		this.argValue = argValue;
-		this.argValue = "&displayLines=1&displayCoordXY=1";
+		listeLigneMetro.add("A");
+		listeLigneMetro.add("B");
 	}
 	
 	public HashMap<String,String> getResultsListeLignesZone(String param) {
@@ -38,13 +42,14 @@ public class RequestBBox extends Request {
 	       for(int j = 0; j < courrant2.size(); j++) {
 	    	   courrant3  = courrant2.get(j).getChildren("line"); 
 	    	   for(int k = 0; k < courrant3.size(); k++) {
-	    		   if(param == null) {
+	    		   if(param == null && !listeLigneMetro.contains(courrant3.get(k).getAttributeValue("shortName"))) {
 		    		   mapLignes.put(courant.getChildren("stopArea").get(0).getAttributeValue("id") +
 		    				   ":" +courrant3.get(k).getAttributeValue("shortName"),
 		    				   courant.getChildren("stopArea").get(0).getAttributeValue("x") + 
 		    				   ";" + courant.getChildren("stopArea").get(0).getAttributeValue("y"));
 	    		   } else if(param != null && courant.getChildren("stopArea").get(0).getAttributeValue("id").equals(param)) {
-	    			   mapLignes.put(courrant3.get(k).getAttributeValue("id"),
+	    			   mapLignes.put(courant.getChildren("stopArea").get(0).getAttributeValue("id") +
+		    				   ":" +courrant3.get(k).getAttributeValue("shortName"),
 		    				   courant.getChildren("stopArea").get(0).getAttributeValue("x") + 
 		    				   ";" + courant.getChildren("stopArea").get(0).getAttributeValue("y"));
 		    	   }

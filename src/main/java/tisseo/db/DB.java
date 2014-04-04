@@ -69,11 +69,12 @@ public class DB {
 		ArrayList<Ligne> listeLignes = new ArrayList<Ligne>();
 		try {
 			ResultSet resultatQ = st.executeQuery(requete);
-			Ligne courante = new Ligne(resultatQ.getString("numligne"),
-					Integer.parseInt(resultatQ.getString("nombre")));
-			listeLignes.add(courante);
+			while(resultatQ.next()){
+				Ligne courante = new Ligne(resultatQ.getString("numligne"),
+						Integer.parseInt(resultatQ.getString("nombre")));
+				listeLignes.add(courante);
+			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return listeLignes;
@@ -99,7 +100,11 @@ public class DB {
 		}
 	}
 
-	public void close () throws SQLException {
-		connexion.close();
+	public void close () {
+		try {
+			connexion.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}	
 }

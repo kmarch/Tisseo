@@ -24,7 +24,8 @@ public class GenereAPITisseo implements GenereAPI {
 				"&key=" + key;
 		if(arg != null) {
 			resultat += "&" + arg + "=" +argValue;
-		} else if(listeArgs != null) {
+		} 
+		if(listeArgs != null) {
 			for (Map.Entry<String, String> entry : listeArgs.entrySet()) {
 				resultat += "&" + entry.getKey() + "=" + entry.getValue();
 			}
