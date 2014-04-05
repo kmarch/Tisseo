@@ -169,6 +169,7 @@ public class ControleHoraire {
 	private String calculPlusCourt(HashMap<String, String> listeArretProximite,
 			HashMap<String, String> listeLigneArretChoisi, String id) {
 		Map.Entry<String, String> resultat = null;
+		ArrayList<String> listeLigneArret = new ArrayList<String>();
 		String plusCourt = null;
 		String nouvelleCle;
 		String duree;
@@ -181,8 +182,10 @@ public class ControleHoraire {
 		RequestTemps requete;
 		for (Map.Entry<String, String> entry : listeLigneArretChoisi.entrySet()) {
 			coord1 = getCoord(entry.getValue());
+			listeLigneArret.add(entry.getKey().split("[:]")[1]);
 			for (Map.Entry<String, String> entry2 : listeArretProximite.entrySet()) {
-				if(plusCourt == null) {
+				if(plusCourt == null && 
+						listeLigneArret.contains(entry2.getKey().split("[:]")[1])) {
 					resultat = entry2;
 					plusCourt = entry2.getKey();
 					Double [] coord2 = getCoord(entry.getValue());
@@ -192,13 +195,14 @@ public class ControleHoraire {
 					duree = requete.getResults(entry.getKey().split("[:]")[1]);
 					nbSeconde = getAttenteSeconde(duree);
 					nbSeconde += plusProche/ VITESSE_BUS;
-				} else {
+				} else if(listeLigneArret.contains(entry2.getKey().split("[:]")[1])) {
 					nouvelleCle = entry2.getKey();
 					Double [] coord2 = getCoord(entry.getValue());
 					courrante =  CalculPosition.distanceVolOiseauEntre2PointsSansPrécision(
 							coord1[0], coord1[1], coord2[0], coord2[1]);
 					requete = new RequestTemps(id);
 					duree = requete.getResults(entry.getKey().split("[:]")[1]);
+					System.out.println(resultat +"duree" + entry.getKey().split("[:]")[1] + " "+ duree);
 					nouveauTemps = getAttenteSeconde(duree);
 					nouveauTemps += courrante/VITESSE_BUS;
 					if(entry2.getKey().split("[:]")[1].equals(entry.getKey().split("[:]")[1]) && 
@@ -254,7 +258,7 @@ public class ControleHoraire {
 			tempsAttente.set(annee, mois-1,jour,heure, min, sec);
 			return (int) ((tempsAttente.getTime().getTime() -Calendar.getInstance().getTime().getTime())/1000);
 		}
-		return -1;
+		return 1000000000;
 	}
 	
 	public  Double[] getCoord(String param) {

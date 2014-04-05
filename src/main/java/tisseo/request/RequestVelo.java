@@ -57,7 +57,6 @@ public class RequestVelo extends Request {
     	    JsonReader rdr = Json.createReader(is);
     	    JsonArray obj = rdr.readArray();
     	    for (JsonObject result : obj.getValuesAs(JsonObject.class)) {
-    	    	System.out.println(result.getJsonObject("position").get("lat"));
     	    	distance = CalculPosition.distanceVolOiseauEntre2PointsSansPrécision(posX, posY,
     	    			Double.parseDouble(result.getJsonObject("position").get("lng").toString()),
     	    			Double.parseDouble(result.getJsonObject("position").get("lat").toString()));
