@@ -30,7 +30,7 @@ public class RequestArret extends Request{
 	       //pouvoir utiliser les méthodes propres aux Element comme :
 	       //sélectionner un nœud fils, modifier du texte, etc...
 	       Element courant = (Element)i.next();
-	       if(courant.getAttribute("name").getValue().toLowerCase().contains(param)) {
+	       if(courant.getAttribute("name").getValue().toLowerCase().contains(param.toLowerCase())) {
 	     	   resultat = courant.getAttribute("id").getValue();
 	       } 
 	    }

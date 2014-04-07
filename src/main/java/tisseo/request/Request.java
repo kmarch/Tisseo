@@ -20,6 +20,7 @@ public abstract class Request {
 	protected GenereAPI generateur;
 	
 	public String genRequest() {
+		System.out.println(generateur.genRequest(action, format, arg, argValue));
 		return generateur.genRequest(action, format, arg, argValue);
 	}
 	

@@ -1,10 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Insert title here</title>
-</head>
+<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width ,initial-scale=1"/>
+	<link rel="stylesheet" href="css/jquery.mobile-1.3.1.min.css" />
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>
+	<div data-role="header">
+		<h1>Liste des lignes:</h1>
+	</div>
+	<style>
+	.ui-block-a img {
+            width  : 100%;
+            max-width:312px;
+            height : auto;
+            margin : 0 auto;
+        }
+        
+	</style></head>
 <body>
+	<center>
 	<p th:utext="'La liste des lignes: ' + ${liste}" />
-
+	</center>
 </body>
 </html>

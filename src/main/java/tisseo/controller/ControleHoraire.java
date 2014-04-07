@@ -30,16 +30,31 @@ public class ControleHoraire {
 	private final String POS_BBOX = "1.461593%2C43.557055%2C1.467988%2C43.570054";
 	private final double POS_X = 1.466170;
 	private final double POS_Y = 43.562881;
-	private final double VITESSE_BUS = 0.83;//(km/s)
+	private final double VITESSE_BUS = 0.013;//(km/s)
+	private final double VITESSE_VELO = 0.0055;//(km/s)
 	public final static String URL = "jdbc:postgresql:Tisseo";
 	public final static String NOM_BASE = "postgres";
 	public final static String PWD = "romano";
 	
 	@RequestMapping("/")
-	String home() {
+	public String home() {
 	   return "index";
 	}
 
+	@RequestMapping("/frmLignes")
+	public String frmLigne() {
+		return "frmLignes";
+	}
+
+	@RequestMapping("/frmVelo")
+	public String frmVelo() {
+		return "frmVelo";
+	}
+	
+	@RequestMapping("/frmItineraire")
+	public String frmItineraire() {
+		return "frmItineraire";
+	}
 	@RequestMapping("/calculHoraire")
 	public String calculHoraire(@RequestParam(value="numLigne", required=true) String numLigne, 
 			@RequestParam(value="arret", required=true) String arret,
@@ -81,9 +96,9 @@ public class ControleHoraire {
 			resultat += "ligne " + listeLignesBD.get(i).getId() + ":" + 
 					listeLignesBD.get(i).getLike()+ " likes " +
 					"<a href ='incrementeLigne?id=" + listeLignesBD.get(i).getId()+
-					"'><IMG SRC='green-plus-sign-md.png'/> </a>" +
+					"' data-ajax='false'><IMG SRC='green-plus-sign-md.png'/> </a>" +
 					"<a href ='decrementeLigne?id=" + listeLignesBD.get(i).getId()+
-					"'><IMG SRC='forbidden.png'/></a> " +
+					"' data-ajax='false'><IMG SRC='forbidden.png'/></a> " +
 					"<BR/>";  
 		}
 		baseLignes.close();
@@ -133,10 +148,10 @@ public class ControleHoraire {
 		Iterator<Map.Entry<String,String>> it = listeCoordAdresse.entrySet().iterator();
 		while(it.hasNext()) {
 			Map.Entry<String, String> entry = it.next();
-			System.out.println(entry.getValue());
 			resultat += "<a href=plusRapideTrajet?x=" + entry.getValue().split("[;]")[1]
 					+ "&y=" + entry.getValue().split("[;]")[2] + 
-					"&id=" + entry.getValue().split("[;]")[0] + ">" + entry.getKey() +
+					"&id=" + entry.getValue().split("[;]")[0] + 
+					" data-ajax='false'>" + entry.getKey() +
 					"</a><BR/>";
 		}
 		model.addAttribute("liste", resultat);
@@ -153,32 +168,43 @@ public class ControleHoraire {
 		HashMap<String,String> listeArgs = new HashMap<String,String>();
 		listeArgs.put("displayLines", "1");
 		listeArgs.put("displayCoordXY", "1");
-		String itineraire;
+		String[] itineraire;
 		RequestBBox requete = new RequestBBox("bbox", POS_BBOX, listeArgs);
 		listeArretProximite = requete.getResultsListeLignesZone(null);
 		System.out.println(listeArretProximite.size()+"ici"+ listeArretProximite );
 		requete = new RequestBBox(null, null, listeArgs);
+		listeArgs.put("stopAreaId", id);
 		listeLigneArretChoisi = requete.getResultsListeLignesZone(id);
 		System.out.println(id+"la" + listeLigneArretChoisi);
-		itineraire = calculPlusCourt(listeArretProximite, listeLigneArretChoisi, id);
-		model.addAttribute("plusCourt", itineraire);
+		itineraire = calculPlusCourt(listeArretProximite, 
+				listeLigneArretChoisi, id, x , y);
+		model.addAttribute("bus", itineraire[0]);
+		model.addAttribute("velo", itineraire[1]);
+		model.addAttribute("like", itineraire[2]);
 		return "reponseRapidite";
 	}
 
 	@SuppressWarnings("unused")
-	private String calculPlusCourt(HashMap<String, String> listeArretProximite,
-			HashMap<String, String> listeLigneArretChoisi, String id) {
+	private String [] calculPlusCourt(HashMap<String, String> listeArretProximite,
+			HashMap<String, String> listeLigneArretChoisi, String id, String x, String y) {
 		Map.Entry<String, String> resultat = null;
 		ArrayList<String> listeLigneArret = new ArrayList<String>();
 		String plusCourt = null;
 		String nouvelleCle;
 		String duree;
+		String coordDepart = null;
+		String veloDepart = null, veloArrivee = null;
+		String [] tempsBusVeloLike = new String[3];
 		RequestVelo requeteVelo;
-		int nouveauTemps, nbSeconde = 0;
+		Integer tempsVelo = null,nouveauTemps = null;
+		int nbSeconde = 0;
 		double plusProche = 0;//distance
 		double courrante;
 		double temps = 0.0;
 		Double [] coord1;
+		DB baseLignes = new DB(URL, NOM_BASE, PWD);
+		ArrayList<Ligne> listeLignesBD = baseLignes.getLignes();
+		Ligne plusAimee = null;
 		RequestTemps requete;
 		for (Map.Entry<String, String> entry : listeLigneArretChoisi.entrySet()) {
 			coord1 = getCoord(entry.getValue());
@@ -187,38 +213,109 @@ public class ControleHoraire {
 				if(plusCourt == null && 
 						listeLigneArret.contains(entry2.getKey().split("[:]")[1])) {
 					resultat = entry2;
-					plusCourt = entry2.getKey();
-					Double [] coord2 = getCoord(entry.getValue());
-					plusProche = CalculPosition.distanceVolOiseauEntre2PointsSansPrécision(
+					coordDepart = entry2.getValue();
+					Double [] coord2 = getCoord(entry2.getValue());
+					plusProche = CalculPosition.HaversineInM(
 							coord1[0], coord1[1], coord2[0], coord2[1]);
-					requete = new RequestTemps(id);
+					requete = new RequestTemps(entry2.getKey().split("[:]")[0]);
 					duree = requete.getResults(entry.getKey().split("[:]")[1]);
-					nbSeconde = getAttenteSeconde(duree);
-					nbSeconde += plusProche/ VITESSE_BUS;
+					if(duree != null) {
+						plusCourt = entry2.getKey();
+						nbSeconde = getAttenteSeconde(duree);
+						nbSeconde += (plusProche/VITESSE_BUS)*2;
+						for(int i = 0; i < listeLignesBD.size(); i++) {
+							if(plusAimee == null && duree != null&& 
+									listeLignesBD.get(i).getId().
+									equals(entry2.getKey().split("[:]")[1])) {
+								plusAimee = listeLignesBD.get(i);
+							} else if( duree != null && 
+									listeLignesBD.get(i).getId().
+									equals(entry2.getKey().split("[:]")[1]) &&
+									listeLignesBD.get(i).getLike() > plusAimee.getLike()) {
+								plusAimee = listeLignesBD.get(i);
+							}
+						}
+					}
 				} else if(listeLigneArret.contains(entry2.getKey().split("[:]")[1])) {
 					nouvelleCle = entry2.getKey();
-					Double [] coord2 = getCoord(entry.getValue());
-					courrante =  CalculPosition.distanceVolOiseauEntre2PointsSansPrécision(
+					Double [] coord2 = getCoord(entry2.getValue());
+					courrante =  CalculPosition.HaversineInM(
 							coord1[0], coord1[1], coord2[0], coord2[1]);
-					requete = new RequestTemps(id);
+					requete = new RequestTemps(entry2.getKey().split("[:]")[0]);
 					duree = requete.getResults(entry.getKey().split("[:]")[1]);
-					System.out.println(resultat +"duree" + entry.getKey().split("[:]")[1] + " "+ duree);
 					nouveauTemps = getAttenteSeconde(duree);
-					nouveauTemps += courrante/VITESSE_BUS;
-					if(entry2.getKey().split("[:]")[1].equals(entry.getKey().split("[:]")[1]) && 
-							nouveauTemps > -1 && nouveauTemps < nbSeconde) {
-						plusCourt = entry2.getKey();
-						nbSeconde = nouveauTemps;
-						resultat = entry2;
+					if(nouveauTemps != null) {
+						nouveauTemps += (int)(courrante/VITESSE_BUS)*2;
+						if(entry2.getKey().split("[:]")[1].equals(entry.getKey().split("[:]")[1]) && 
+								nouveauTemps > -1 && nouveauTemps < nbSeconde) {
+							plusCourt = entry2.getKey();
+							nbSeconde = nouveauTemps;
+							resultat = entry2;
+							coordDepart = entry2.getValue();
+						}
+						for(int i = 0; i < listeLignesBD.size(); i++) {
+							if(plusAimee == null && duree != null&& 
+									listeLignesBD.get(i).getId().
+									equals(entry2.getKey().split("[:]")[1])) {
+								plusAimee = listeLignesBD.get(i);
+							} else if( duree != null && 
+									listeLignesBD.get(i).getId().
+									equals(entry2.getKey().split("[:]")[1]) &&
+									listeLignesBD.get(i).getLike() > plusAimee.getLike()) {
+								plusAimee = listeLignesBD.get(i);
+							}
+						}
 					}
 				}
 			}
 		}
-		if(resultat== null) {
-			return null;
-		} 
-		System.out.println(new RequestVelo().getListeVelo(POS_X, POS_Y));
-		return resultat.getKey().split("[:]")[1];
+		baseLignes.close();
+		tempsBusVeloLike = genereResultatItineraire(veloDepart, 
+				veloArrivee, tempsVelo, nbSeconde,
+				resultat, plusAimee, x, y);
+		
+		return tempsBusVeloLike;
+	}
+	
+	public String [] genereResultatItineraire(String veloDepart, 
+			String veloArrivee, Integer tempsVelo, int nbSeconde,
+			Map.Entry<String, String> resultat, Ligne plusAimee, String x,
+			String y) {
+		String [] tempsBusVeloLike = new String[3];
+		veloDepart = new RequestVelo().getVelo(POS_X, POS_Y);
+		veloArrivee = new RequestVelo().getVelo(Double.parseDouble(x), 
+				Double.parseDouble(y));
+		tempsVelo = calculTempsVelo(veloDepart, veloArrivee);
+		if (nbSeconde != 0){
+			tempsBusVeloLike[0] = resultat.getKey().split("[:]")[1] + " en " +
+				transformationSecondeParHeure(nbSeconde) + " à l'arrêt "+
+				resultat.getKey().split("[:]")[2];
+		} else {
+			tempsBusVeloLike[0] = "Impossible de rejoindre la destination";
+		}
+		if(tempsVelo != null) {
+			tempsBusVeloLike[1] = "Temps à vélo:" +
+				transformationSecondeParHeure((int)tempsVelo) + 
+				" station: " + veloDepart.split("[;]")[0];
+		} else {
+			tempsBusVeloLike[1] = "Pas de vélo disponible dans la zone";
+		}
+		tempsBusVeloLike[2] =  plusAimee.toString();
+		
+		return tempsBusVeloLike;
+	}
+
+	private Integer calculTempsVelo(String veloDepart, String coordDepart) {
+		double x1,x2,y1,y2, temps, distance;
+		if(veloDepart != null && coordDepart != null) {
+			x1 = Double.parseDouble(veloDepart.split("[;]")[1]);
+			y1 = Double.parseDouble(veloDepart.split("[;]")[2]);
+			x2 = Double.parseDouble(coordDepart.split("[;]")[1]);
+			y2 = Double.parseDouble(coordDepart.split("[;]")[2]);
+			distance = CalculPosition.HaversineInM(x1, y1, x2, y2);
+			return (int) ((distance/VITESSE_VELO)*1.5);
+		}
+		return null;
 	}
 
 	public String getAttente(String formatHeure) {
@@ -240,10 +337,10 @@ public class ControleHoraire {
 		min = duree / 60;
 		duree -= min * 60;
 		sec = duree;
-		return "attente " + heure+"h" + min + "min" + sec + "sec";
+		return heure+"h" + min + "min" + sec + "sec";
 	}
 	
-	public int getAttenteSeconde(String formatHeure) {
+	public Integer getAttenteSeconde(String formatHeure) {
 		int heure, min, sec, annee, mois, jour;
 		Calendar tempsAttente;
 		if(formatHeure != null) {
@@ -258,7 +355,15 @@ public class ControleHoraire {
 			tempsAttente.set(annee, mois-1,jour,heure, min, sec);
 			return (int) ((tempsAttente.getTime().getTime() -Calendar.getInstance().getTime().getTime())/1000);
 		}
-		return 1000000000;
+		return null;
+	}
+	
+	public String transformationSecondeParHeure(int nbSec) {
+		int nbMin, nbHeure = nbSec/3600;
+		nbSec -= nbHeure*3600;
+		nbMin = nbSec/60;
+		nbSec -= nbMin*60;
+		return nbHeure + "h" + nbMin + "min" + nbSec + "sec";
 	}
 	
 	public  Double[] getCoord(String param) {

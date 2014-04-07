@@ -44,12 +44,14 @@ public class RequestBBox extends Request {
 	    	   for(int k = 0; k < courrant3.size(); k++) {
 	    		   if(param == null && !listeLigneMetro.contains(courrant3.get(k).getAttributeValue("shortName"))) {
 		    		   mapLignes.put(courant.getChildren("stopArea").get(0).getAttributeValue("id") +
-		    				   ":" +courrant3.get(k).getAttributeValue("shortName"),
+		    				   ":" +courrant3.get(k).getAttributeValue("shortName") +
+		    				   ":" + courant.getAttributeValue("name"),
 		    				   courant.getChildren("stopArea").get(0).getAttributeValue("x") + 
 		    				   ";" + courant.getChildren("stopArea").get(0).getAttributeValue("y"));
 	    		   } else if(param != null && courant.getChildren("stopArea").get(0).getAttributeValue("id").equals(param)) {
 	    			   mapLignes.put(courant.getChildren("stopArea").get(0).getAttributeValue("id") +
-		    				   ":" +courrant3.get(k).getAttributeValue("shortName"),
+		    				   ":" +courrant3.get(k).getAttributeValue("shortName") +
+		    				   ":" + courant.getAttributeValue("name"),
 		    				   courant.getChildren("stopArea").get(0).getAttributeValue("x") + 
 		    				   ";" + courant.getChildren("stopArea").get(0).getAttributeValue("y"));
 		    	   }

@@ -36,7 +36,7 @@ public class RequestVelo extends Request {
     	        if(result.getString("name").toLowerCase().contains(param) && 
     	        		result.getInt("available_bikes") != 0) {
     	        	resultat = "Il y a " + result.getInt("available_bikes") +
-    	        			" vélos disponibles";
+    	        			" vélo(s) disponible(s) à cet endroit";
     	        }
     	    }
 		} catch (MalformedURLException e) {
@@ -47,7 +47,7 @@ public class RequestVelo extends Request {
     	return resultat;
 	}
 
-	public String getListeVelo(double posX, double posY) {
+	public String getVelo(double posX, double posY) {
 		URL url = null;
 		String resultat = null;
 		Double distance,plusCourt = 10000000000.;
@@ -57,13 +57,15 @@ public class RequestVelo extends Request {
     	    JsonReader rdr = Json.createReader(is);
     	    JsonArray obj = rdr.readArray();
     	    for (JsonObject result : obj.getValuesAs(JsonObject.class)) {
-    	    	distance = CalculPosition.distanceVolOiseauEntre2PointsSansPrécision(posX, posY,
+    	    	distance = (double) CalculPosition.HaversineInM(posX, posY,
     	    			Double.parseDouble(result.getJsonObject("position").get("lng").toString()),
     	    			Double.parseDouble(result.getJsonObject("position").get("lat").toString()));
     	    	if(result.getInt("available_bikes") != 0 &&
     	    			distance < 500 && distance < plusCourt) {
     	    		plusCourt = distance;
-    	    		resultat = result.getString("name");
+    	    		resultat = result.getString("name") + ";" +
+    	    				result.getJsonObject("position").get("lng").toString() +
+    	    				";" +result.getJsonObject("position").get("lat").toString();
     	    	}
     	    }
 		} catch (MalformedURLException e) {

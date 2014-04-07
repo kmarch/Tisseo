@@ -1,10 +1,27 @@
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Traffic Tisséo</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width ,initial-scale=1"/>
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css" />
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>
+	<div data-role="header">
+		<h1>Prochain départ:</h1>
+	</div>
+	<style>
+	.ui-block-a img {
+            width  : 100%;
+            max-width:312px;
+            height : auto;
+            margin : 0 auto;
+        }
+        
+	</style>
 </head>
 	<body> 
+		<center>
 	    <p th:text="'Temps avant le prochaine départ: ' + ${temps}" />
+	    </center>
 	</body>
 </html>

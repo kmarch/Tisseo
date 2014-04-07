@@ -27,10 +27,13 @@ public class RequestTemps extends Request{
 	    Iterator<Element> i = listId.iterator();
 	    while(i.hasNext()) {
 		    Element courant = (Element)i.next();
-		    if(courant.getChild("line").getAttributeValue("shortName").equals(param))
+		    if(courant.getChild("line").getAttributeValue("shortName").equals(param)){
 		    	resultat = courant.getAttributeValue("dateTime");
+		    	break;
+		    }
 	    }
+	    System.out.println("resultat " +resultat);
 	     return resultat;
 	}
-
+	//1970324837185012
 }
