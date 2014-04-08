@@ -32,7 +32,6 @@ public class RequestTemps extends Request{
 		    	break;
 		    }
 	    }
-	    System.out.println("resultat " +resultat);
-	     return resultat;
+	    return resultat;
 	}
 }

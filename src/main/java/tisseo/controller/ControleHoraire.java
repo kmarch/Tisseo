@@ -61,18 +61,26 @@ public class ControleHoraire {
 		return "frmItineraire";
 	}
 	@RequestMapping("/calculHoraire")
-	public String calculHoraire(@RequestParam(value="numLigne", required=true) String numLigne, 
-			@RequestParam(value="arret", required=true) String arret,
-			Model model) {
-		String formatHeure;
-		RequestLigne requete = new RequestLigne();
-		RequestArret requeteArret = new RequestArret("lineId", requete.getResults(numLigne));
+	public String calculHoraire(Model model) {
+		String temps = "";
+		String duree;
+		HashMap<String,String> listeArretProximite;
+		HashMap<String,String> listeArgs = new HashMap<String,String>();
+		listeArgs.put("displayLines", "1");
+		listeArgs.put("displayCoordXY", "1");
+		RequestBBox requete = new RequestBBox("bbox", POS_BBOX, listeArgs);
 		RequestTemps requeteTemps;
-		requeteTemps = new RequestTemps(requeteArret.getResults(arret));
-		formatHeure = requeteTemps.getResults(numLigne);
-		if (formatHeure != null){
-		    model.addAttribute("temps", getAttente(formatHeure));
+		listeArretProximite = requete.getResultsListeLignesZone(null);
+		for (Map.Entry<String, String> entry : listeArretProximite.entrySet()) {
+			requeteTemps = new RequestTemps(entry.getKey().split("[:]")[0]);
+			duree = requeteTemps.getResults(entry.getKey().split("[:]")[1]);
+			if(duree !=null){
+				temps += "Ligne:" +entry.getKey().split("[:]")[1] + " arrêt:" +
+						entry.getKey().split("[:]")[2] +" depart dans: " +
+						getAttente(duree)+"<br/>";
+			}
 		}
+		model.addAttribute("temps", temps);
 		return "attente";
 	}
 	
@@ -195,10 +203,8 @@ public class ControleHoraire {
 		Map.Entry<String, String> resultat = null;
 		ArrayList<String> listeLigneArret = new ArrayList<String>();
 		String plusCourt = null;
-		String nouvelleCle;
-		String duree;
+		String nouvelleCle, duree, prochainDepartPlusRapide = null;
 		String coordDepart = null;
-		String veloDepart = null, veloArrivee = null;
 		String [] tempsBusVeloLike = new String[3];
 		RequestVelo requeteVelo;
 		Integer tempsVelo = null,nouveauTemps = null;
@@ -225,6 +231,7 @@ public class ControleHoraire {
 					requete = new RequestTemps(entry2.getKey().split("[:]")[0]);
 					duree = requete.getResults(entry.getKey().split("[:]")[1]);
 					if(duree != null) {
+						prochainDepartPlusRapide = duree;
 						plusCourt = entry2.getKey();
 						nbSeconde = getAttenteSeconde(duree);
 						nbSeconde += (plusProche/VITESSE_BUS)*2;
@@ -253,6 +260,7 @@ public class ControleHoraire {
 						nouveauTemps += (int)(courrante/VITESSE_BUS)*2;
 						if(entry2.getKey().split("[:]")[1].equals(entry.getKey().split("[:]")[1]) && 
 								nouveauTemps > -1 && nouveauTemps < nbSeconde) {
+							prochainDepartPlusRapide = duree;
 							plusCourt = entry2.getKey();
 							nbSeconde = nouveauTemps;
 							resultat = entry2;
@@ -275,17 +283,16 @@ public class ControleHoraire {
 			}
 		}
 		baseLignes.close();
-		tempsBusVeloLike = genereResultatItineraire(veloDepart, 
-				veloArrivee, tempsVelo, nbSeconde,
-				resultat, plusAimee, x, y);
-		
+		tempsBusVeloLike = genereResultatItineraire(tempsVelo, nbSeconde,
+				resultat, prochainDepartPlusRapide ,plusAimee, x, y);
+		System.out.println("resultat " +resultat);
 		return tempsBusVeloLike;
 	}
 	
-	public String [] genereResultatItineraire(String veloDepart, 
-			String veloArrivee, Integer tempsVelo, int nbSeconde,
-			Map.Entry<String, String> resultat, Ligne plusAimee, String x,
-			String y) {
+	public String [] genereResultatItineraire(Integer tempsVelo, int nbSeconde,
+			Map.Entry<String, String> resultat, String prochainDepartPlusRapide,
+			Ligne plusAimee, String x, String y) {
+		String veloDepart, veloArrivee; 
 		String [] tempsBusVeloLike = new String[3];
 		veloDepart = new RequestVelo().getVelo(POS_X, POS_Y);
 		veloArrivee = new RequestVelo().getVelo(Double.parseDouble(x), 
@@ -294,7 +301,8 @@ public class ControleHoraire {
 		if (nbSeconde != 0){
 			tempsBusVeloLike[0] = resultat.getKey().split("[:]")[1] + " en " +
 				transformationSecondeParHeure(nbSeconde) + " à l'arrêt "+
-				resultat.getKey().split("[:]")[2];
+				resultat.getKey().split("[:]")[2] +" départ dans " +
+				getAttente(prochainDepartPlusRapide);
 		} else {
 			tempsBusVeloLike[0] = "Impossible de rejoindre la destination";
 		}
@@ -311,7 +319,7 @@ public class ControleHoraire {
 	}
 
 	private Integer calculTempsVelo(String veloDepart, String coordDepart) {
-		double x1,x2,y1,y2, temps, distance;
+		double x1,x2,y1,y2, distance;
 		if(veloDepart != null && coordDepart != null) {
 			x1 = Double.parseDouble(veloDepart.split("[;]")[1]);
 			y1 = Double.parseDouble(veloDepart.split("[;]")[2]);

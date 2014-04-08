@@ -28,15 +28,15 @@ public class Ligne extends CouchDbDocument {
 		this.like--;
 	}
 	
-	public String toString() {
-		return id + " " + like; 
-	}
-	
 	public String getId() {
 		return id;
 	}
 	
 	public int getLike() {
 		return like;
+	}
+	
+	public String toString() {
+		return id + ": " + like + " likes";
 	}
 }
