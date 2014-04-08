@@ -16,9 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import tisseo.CalculPosition;
 import tisseo.db.DB;
 import tisseo.db.Ligne;
-import tisseo.request.RequestArret;
 import tisseo.request.RequestBBox;
-import tisseo.request.RequestLigne;
 import tisseo.request.RequestPosition;
 import tisseo.request.RequestTemps;
 import tisseo.request.RequestVelo;
@@ -46,11 +44,6 @@ public class ControleHoraire {
 		return "index";
 	}
 
-	@RequestMapping("/frmLignes")
-	public String frmLigne() {
-		return "frmLignes";
-	}
-
 	@RequestMapping("/frmVelo")
 	public String frmVelo() {
 		return "frmVelo";
@@ -60,6 +53,13 @@ public class ControleHoraire {
 	public String frmItineraire() {
 		return "frmItineraire";
 	}
+	
+	/**
+	 * Calcul des temps de départ des lignes de bus présentes dans la 
+	 * zone de Paul Sabatier
+	 * @param model
+	 * @return
+	 */
 	@RequestMapping("/calculHoraire")
 	public String calculHoraire(Model model) {
 		String temps = "";
@@ -84,61 +84,13 @@ public class ControleHoraire {
 		return "attente";
 	}
 	
-	@RequestMapping("/listeAllLignes")
-	public String listeAllLignes(Model model) {
-		String resultat;
-		boolean estPresent;
-		DB baseLignes = new DB(URL, NOM_BASE, PWD);
-		RequestLigne requete = new RequestLigne();
-		ArrayList<Ligne> listeLignesBD = baseLignes.getLignes();
-		ArrayList<String> listeLignesTisseo = requete.getResults();
-		for(int i = 0; i < listeLignesTisseo.size(); i++) {
-			estPresent = false;
-			for(int j = 0; j< listeLignesBD.size() && !estPresent; j++) {
-				if(listeLignesBD.get(j).getId().equals(listeLignesTisseo.get(i))) {
-					estPresent = true;
-				}
-			}
-			if(!estPresent) {
-				baseLignes.insere(new Ligne(listeLignesTisseo.get(i)));
-				listeLignesBD.add(new Ligne(listeLignesTisseo.get(i)));
-			}
-		}
-		resultat = "";
-		for(int i = 0; i < listeLignesBD.size(); i++) {
-			resultat += "ligne " + listeLignesBD.get(i).getId() + ":" + 
-					listeLignesBD.get(i).getLike()+ " likes " +
-					"<a href ='incrementeLigne?id=" + listeLignesBD.get(i).getId()+
-					"' data-ajax='false'><IMG SRC='images/green-plus-sign-md.png'/> </a>" +
-					"<a href ='decrementeLigne?id=" + listeLignesBD.get(i).getId()+
-					"' data-ajax='false'><IMG SRC='images/forbidden.png'/></a> " +
-					"<BR/>";  
-		}
-		baseLignes.close();
-		model.addAttribute("liste", resultat);
-		return "listeAllLignes";
-	}
-	
-	@RequestMapping("/incrementeLigne")
-	public String incrementeLigne(@RequestParam(value="id", required=true) String id,
-			Model model) {
-		DB baseLigne = new DB(URL, NOM_BASE, PWD); 
-		Ligne ligne = baseLigne.getLigne(id);
-		ligne.incr();
-		baseLigne.update(ligne);
-		return "index";
-	}
-	
-	@RequestMapping("/decrementeLigne")
-	public String decrementeLigne(@RequestParam(value="id", required=true) String id,
-			Model model) {
-		DB baseLigne = new DB(URL, NOM_BASE, PWD); 
-		Ligne ligne = baseLigne.getLigne(id);
-		ligne.decr();
-		baseLigne.update(ligne);
-		return "index";
-	}
-	
+	/**
+	 * Cherche le nombre de vélo disponible pour l'endroit insiquer par
+	 * l'utilisateur
+	 * @param lieu
+	 * @param model
+	 * @return
+	 */
 	@RequestMapping("/dispoVelo")
 	public String dispoVelo(@RequestParam(value="lieu", required=true) String lieu,
 			Model model) {
@@ -152,6 +104,13 @@ public class ControleHoraire {
 		return "dispoVelo";
 	}
 	
+	/**
+	 * Recherche des arrêts proche de la zone indiquée par l'utilisateur
+	 * (à 300 mètres environ)
+	 * @param adresse, l'endroit où veut aller l'utilisateur
+	 * @param model
+	 * @return
+	 */
 	@RequestMapping("/trajetPlusRapide")
 	public String trajetPlusRapide(@RequestParam(value="adresse", required=true) String adresse,
 			Model model) {
@@ -171,6 +130,16 @@ public class ControleHoraire {
 		return "plusRapide";
 	}
 	
+	/**
+	 * Recherche de l'itinéraire le plus rapide pour se rendre à une adresse
+	 * on va chercher les lignes qui déservent l'arrêt choisi par l'utilisateur
+	 * pour celles qui sont dans la zones de l'utilisateur
+	 * @param x coordonnée de l'arrêt choisi par l'utilisateur
+	 * @param y coordonnée de l'arrêt choisi par l'utilisateur
+	 * @param id, id de l'arrêt choisi par l'utilisateur
+	 * @param model
+	 * @return
+	 */
 	@RequestMapping("/plusRapideTrajet")
 	public String plusRapide(@RequestParam(value="x", required=true) String x,
 			@RequestParam(value="y", required=true) String y,
@@ -184,11 +153,9 @@ public class ControleHoraire {
 		String[] itineraire;
 		RequestBBox requete = new RequestBBox("bbox", POS_BBOX, listeArgs);
 		listeArretProximite = requete.getResultsListeLignesZone(null);
-		System.out.println(listeArretProximite.size()+"ici"+ listeArretProximite );
 		requete = new RequestBBox(null, null, listeArgs);
 		listeArgs.put("stopAreaId", id);
 		listeLigneArretChoisi = requete.getResultsListeLignesZone(id);
-		System.out.println(id+"la" + listeLigneArretChoisi);
 		itineraire = calculPlusCourt(listeArretProximite, 
 				listeLigneArretChoisi, id, x , y);
 		model.addAttribute("bus", itineraire[0]);
@@ -197,17 +164,33 @@ public class ControleHoraire {
 		return "reponseRapidite";
 	}
 
+	/**
+	 * Calcul de l'itinéraire le plus rapide entre les lignes qui déservent 
+	 * l'arrêt choisi par l'utilisateur et celle qui sont dans la zone de 
+	 * l'utilisateur, on va d'abord chercher les lignes qu'on ces deux zone en
+	 * commun, puis en fonction des temps de départ on va calculer le plus 
+	 * rapide et le retouner, avec le temps de parcours à vélo entre la zone 
+	 * de vélo la plus proche de l'utilisateur(possédant des vélo disponible)
+	 * et la zone de vélo la plus proche de l'arrêt où veut aller l'utilisateur
+	 * @param listeArretProximite, les lignes proches de l'utilisateur
+	 * @param listeLigneArretChoisi, les lignes qui déservent l'arrêt choisi
+	 * @param id, identificateur de l'arrêt choisi
+	 * @param x
+	 * @param y
+	 * @return
+	 */
 	@SuppressWarnings("unused")
 	private String [] calculPlusCourt(HashMap<String, String> listeArretProximite,
 			HashMap<String, String> listeLigneArretChoisi, String id, String x, String y) {
 		Map.Entry<String, String> resultat = null;
 		ArrayList<String> listeLigneArret = new ArrayList<String>();
+		ArrayList<String> listeLigneCommunes = new ArrayList<String>();
 		String plusCourt = null;
-		String nouvelleCle, duree, prochainDepartPlusRapide = null;
+		String nouvelleCle, duree = null, prochainDepartPlusRapide = null;
 		String coordDepart = null;
 		String [] tempsBusVeloLike = new String[3];
 		RequestVelo requeteVelo;
-		Integer tempsVelo = null,nouveauTemps = null;
+		Integer nouveauTemps = null;
 		int nbSeconde = 0;
 		double plusProche = 0;//distance
 		double courrante;
@@ -235,18 +218,7 @@ public class ControleHoraire {
 						plusCourt = entry2.getKey();
 						nbSeconde = getAttenteSeconde(duree);
 						nbSeconde += (plusProche/VITESSE_BUS)*2;
-						for(int i = 0; i < listeLignesBD.size(); i++) {
-							if(plusAimee == null && duree != null&& 
-									listeLignesBD.get(i).getId().
-									equals(entry2.getKey().split("[:]")[1])) {
-								plusAimee = listeLignesBD.get(i);
-							} else if( duree != null && 
-									listeLignesBD.get(i).getId().
-									equals(entry2.getKey().split("[:]")[1]) &&
-									listeLignesBD.get(i).getLike() > plusAimee.getLike()) {
-								plusAimee = listeLignesBD.get(i);
-							}
-						}
+						listeLigneCommunes.add(entry.getKey().split("[:]")[1]);
 					}
 				} else if(listeLigneArret.contains(entry2.getKey().split("[:]")[1])) {
 					nouvelleCle = entry2.getKey();
@@ -265,33 +237,42 @@ public class ControleHoraire {
 							nbSeconde = nouveauTemps;
 							resultat = entry2;
 							coordDepart = entry2.getValue();
-						}
-						for(int i = 0; i < listeLignesBD.size(); i++) {
-							if(plusAimee == null && duree != null&& 
-									listeLignesBD.get(i).getId().
-									equals(entry2.getKey().split("[:]")[1])) {
-								plusAimee = listeLignesBD.get(i);
-							} else if( duree != null && 
-									listeLignesBD.get(i).getId().
-									equals(entry2.getKey().split("[:]")[1]) &&
-									listeLignesBD.get(i).getLike() > plusAimee.getLike()) {
-								plusAimee = listeLignesBD.get(i);
-							}
+							listeLigneCommunes.add(entry.getKey().split("[:]")[1]);
 						}
 					}
 				}
 			}
 		}
+		for(int i = 0; i < listeLignesBD.size(); i++) {
+			if(listeLigneCommunes.contains(listeLignesBD.get(i).getId())) {
+				plusAimee = listeLignesBD.get(i);
+				i = listeLignesBD.size();
+			} 
+		}
+		System.out.println(listeLigneCommunes.toString() + " ");
 		baseLignes.close();
-		tempsBusVeloLike = genereResultatItineraire(tempsVelo, nbSeconde,
+		tempsBusVeloLike = genereResultatItineraire(nbSeconde,
 				resultat, prochainDepartPlusRapide ,plusAimee, x, y);
-		System.out.println("resultat " +resultat);
 		return tempsBusVeloLike;
 	}
 	
-	public String [] genereResultatItineraire(Integer tempsVelo, int nbSeconde,
+	/**
+	 * Génèration du résultat du calcul de l'itinéraire
+	 * @param tempsVelo
+	 * @param nbSeconde
+	 * @param resultat
+	 * @param prochainDepartPlusRapide
+	 * @param plusAimee
+	 * @param x
+	 * @param y
+	 * @return Ligne de bus la plus rapide, départ de vélo le plus proche
+	 * pour rejoindre l'arrêt de vélo le plus proche, ligne de bus la plus liker
+	 * desservant cet arret
+	 */
+	public String [] genereResultatItineraire( int nbSeconde,
 			Map.Entry<String, String> resultat, String prochainDepartPlusRapide,
 			Ligne plusAimee, String x, String y) {
+		Integer tempsVelo;
 		String veloDepart, veloArrivee; 
 		String [] tempsBusVeloLike = new String[3];
 		veloDepart = new RequestVelo().getVelo(POS_X, POS_Y);

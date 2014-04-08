@@ -1,8 +1,6 @@
 package tisseo.request.generation;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import tisseo.request.generation.inter.GenereAPI;
 

@@ -40,7 +40,6 @@ public class CalculPosition {
                 * Math.pow(Math.sin(dlong / 2D), 2D);
         double c = 2D * Math.atan2(Math.sqrt(a), Math.sqrt(1D - a));
         double d = _eQuatorialEarthRadius * c;
-
         return d/1000;
     }
 }

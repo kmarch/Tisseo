@@ -94,7 +94,6 @@ public class DB {
 				" where numLigne = '%s' ",id);
 		Ligne resultat = null;
 		try {
-			System.out.println(requete);
 			ResultSet resultatQ = st.executeQuery(requete);
 			resultatQ.next();
 			resultat = new Ligne(resultatQ.getString("numLigne"),
@@ -109,7 +108,6 @@ public class DB {
 		String requete = String.format("insert into ligne values('%s', '%s')",
 				aInsere.getId(), aInsere.getLike());
 		try {
-			System.out.println(requete);
 			st.executeQuery(requete);
 		} catch (SQLException e) {
 		}

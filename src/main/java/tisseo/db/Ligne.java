@@ -1,12 +1,8 @@
 package tisseo.db;
 
-import org.ektorp.support.CouchDbDocument;
-import org.ektorp.support.TypeDiscriminator;
 
-
-public class Ligne extends CouchDbDocument {
+public class Ligne{
 	
-	@TypeDiscriminator
 	private String id;
 	private int like;
 	

@@ -25,7 +25,6 @@ public class RequestBBox extends Request {
 	}
 	
 	public HashMap<String,String> getResultsListeLignesZone(String param) {
-		System.out.println("ca commence");
 		prepareXML();
 		HashMap<String,String> mapLignes = new HashMap<String,String>();
 	    List<Element> listId = racine.getChildren("physicalStop");
