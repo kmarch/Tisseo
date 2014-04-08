@@ -40,6 +40,11 @@ public class ControleHoraire {
 	public String home() {
 	   return "index";
 	}
+	
+	@RequestMapping("/index")
+	public String index() {
+		return "index";
+	}
 
 	@RequestMapping("/frmLignes")
 	public String frmLigne() {
@@ -96,9 +101,9 @@ public class ControleHoraire {
 			resultat += "ligne " + listeLignesBD.get(i).getId() + ":" + 
 					listeLignesBD.get(i).getLike()+ " likes " +
 					"<a href ='incrementeLigne?id=" + listeLignesBD.get(i).getId()+
-					"' data-ajax='false'><IMG SRC='green-plus-sign-md.png'/> </a>" +
+					"' data-ajax='false'><IMG SRC='images/green-plus-sign-md.png'/> </a>" +
 					"<a href ='decrementeLigne?id=" + listeLignesBD.get(i).getId()+
-					"' data-ajax='false'><IMG SRC='forbidden.png'/></a> " +
+					"' data-ajax='false'><IMG SRC='images/forbidden.png'/></a> " +
 					"<BR/>";  
 		}
 		baseLignes.close();

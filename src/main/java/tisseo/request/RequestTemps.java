@@ -35,5 +35,4 @@ public class RequestTemps extends Request{
 	    System.out.println("resultat " +resultat);
 	     return resultat;
 	}
-	//1970324837185012
 }
