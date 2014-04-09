@@ -243,11 +243,8 @@ public class ControleHoraire {
 				}
 			}
 		}
-		System.out.println(listeLignesBD);
-		System.out.println(listeLigneCommunes);
 		for(int i = 0; i < listeLignesBD.size(); i++) {
 			if(listeLigneCommunes.contains(listeLignesBD.get(i).getId())) {
-				System.out.println();
 				plusAimee = listeLignesBD.get(i);
 				i = listeLignesBD.size();
 			} 

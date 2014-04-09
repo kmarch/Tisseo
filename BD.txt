@@ -1,0 +1,22 @@
+
+CREATE DATABASE "Tisseo"
+  WITH OWNER = postgres
+       ENCODING = 'UTF8'
+       TABLESPACE = pg_default
+       LC_COLLATE = 'French_France.1252'
+       LC_CTYPE = 'French_France.1252'
+       CONNECTION LIMIT = -1;
+       
+       
+CREATE TABLE ligne
+(
+  numligne character varying(10) NOT NULL,
+  nombre character varying(10),
+  CONSTRAINT ligne_pkey PRIMARY KEY (numligne)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE ligne
+  OWNER TO postgres;
+       
