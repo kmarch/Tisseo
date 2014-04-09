@@ -20,6 +20,11 @@ public class RequestPosition extends Request{
 		argValue = adresse;
 	}
 
+	/**
+	 * Récupère tout les arrêts ainsi que leurs positions en fonction
+	 * du 'term' entrer par l'utilisateur 
+	 * @return
+	 */
 	public Map<String,String> getListeResults() {
 		 prepareXML();
 		   List<Element> listId = racine.getChildren("place");

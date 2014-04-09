@@ -24,6 +24,13 @@ public class RequestBBox extends Request {
 		listeLigneMetro.add("B");
 	}
 	
+	/**
+	 * Récupère les lignes ainsi que les coordonnéees d'un arrêt passé en paramètre
+	 * ou si le paramètre est null récupère tout les arrêt et toutes les lignes qui 
+	 * passent par ces arrêt par rapport à une BBoxs
+	 * @param param
+	 * @return
+	 */
 	public HashMap<String,String> getResultsListeLignesZone(String param) {
 		prepareXML();
 		HashMap<String,String> mapLignes = new HashMap<String,String>();
@@ -62,7 +69,6 @@ public class RequestBBox extends Request {
 
 	@Override
 	public String getResults(String param) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

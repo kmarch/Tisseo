@@ -237,19 +237,21 @@ public class ControleHoraire {
 							nbSeconde = nouveauTemps;
 							resultat = entry2;
 							coordDepart = entry2.getValue();
-							listeLigneCommunes.add(entry.getKey().split("[:]")[1]);
 						}
+						listeLigneCommunes.add(entry.getKey().split("[:]")[1]);
 					}
 				}
 			}
 		}
+		System.out.println(listeLignesBD);
+		System.out.println(listeLigneCommunes);
 		for(int i = 0; i < listeLignesBD.size(); i++) {
 			if(listeLigneCommunes.contains(listeLignesBD.get(i).getId())) {
+				System.out.println();
 				plusAimee = listeLignesBD.get(i);
 				i = listeLignesBD.size();
 			} 
 		}
-		System.out.println(listeLigneCommunes.toString() + " ");
 		baseLignes.close();
 		tempsBusVeloLike = genereResultatItineraire(nbSeconde,
 				resultat, prochainDepartPlusRapide ,plusAimee, x, y);
@@ -272,11 +274,11 @@ public class ControleHoraire {
 	public String [] genereResultatItineraire( int nbSeconde,
 			Map.Entry<String, String> resultat, String prochainDepartPlusRapide,
 			Ligne plusAimee, String x, String y) {
-		Integer tempsVelo;
+		Double tempsVelo;
 		String veloDepart, veloArrivee; 
 		String [] tempsBusVeloLike = new String[3];
 		veloDepart = new RequestVelo().getVelo(POS_X, POS_Y);
-		veloArrivee = new RequestVelo().getVelo(Double.parseDouble(x), 
+		veloArrivee = new RequestVelo().getVelo2(Double.parseDouble(x), 
 				Double.parseDouble(y));
 		tempsVelo = calculTempsVelo(veloDepart, veloArrivee);
 		if (nbSeconde != 0){
@@ -287,19 +289,23 @@ public class ControleHoraire {
 		} else {
 			tempsBusVeloLike[0] = "Impossible de rejoindre la destination";
 		}
-		if(tempsVelo != null) {
-			tempsBusVeloLike[1] = "Temps à vélo:" +
-				transformationSecondeParHeure((int)tempsVelo) + 
-				" station: " + veloDepart.split("[;]")[0];
+		if(tempsVelo != null && tempsVelo != 0) {
+			tempsBusVeloLike[1] = 
+					transformationSecondeParHeure(tempsVelo.intValue()) + 
+				" station: " + veloDepart.split("[;]")[0] + " arrivée " + 
+				veloArrivee.split("[;]")[0];
 		} else {
-			tempsBusVeloLike[1] = "Pas de vélo disponible dans la zone";
+			tempsBusVeloLike[1] = "Pas de vélo disponible dans la zone ou zone de vélo pleine";
 		}
-		tempsBusVeloLike[2] =  plusAimee.toString();
-		
+		if(plusAimee != null){
+			tempsBusVeloLike[2] =  plusAimee.toString();
+		} else {
+			tempsBusVeloLike[2] = "Pas de transport disponible";
+		}
 		return tempsBusVeloLike;
 	}
 
-	private Integer calculTempsVelo(String veloDepart, String coordDepart) {
+	private Double calculTempsVelo(String veloDepart, String coordDepart) {
 		double x1,x2,y1,y2, distance;
 		if(veloDepart != null && coordDepart != null) {
 			x1 = Double.parseDouble(veloDepart.split("[;]")[1]);
@@ -307,7 +313,7 @@ public class ControleHoraire {
 			x2 = Double.parseDouble(coordDepart.split("[;]")[1]);
 			y2 = Double.parseDouble(coordDepart.split("[;]")[2]);
 			distance = CalculPosition.HaversineInM(x1, y1, x2, y2);
-			return (int) ((distance/VITESSE_VELO)*1.5);
+			return ((distance/VITESSE_VELO)*1.5);
 		}
 		return null;
 	}

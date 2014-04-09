@@ -17,6 +17,9 @@ public class RequestArret extends Request{
 		this.argValue = argValue;
 	}
 	
+	/**
+	 * Obtention de l'identifiant d'un arrêt en fonction de son nom
+	 */
 	@Override
 	public String getResults(String param) {
 		prepareXML();

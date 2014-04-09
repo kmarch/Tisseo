@@ -18,18 +18,22 @@ public class RequestTemps extends Request{
 		argValue = arret;
 	}
 	
+	/**
+	 * Obtention du prochain départ d'une ligne
+	 */
 	@Override
 	public String getResults(String param) {
 		prepareXML();
 	    List<Element> listId = racine.getChildren("departure");
 	    String resultat = null;
+	    boolean fin = false;
 	    //On crée un Iterator sur notre liste
 	    Iterator<Element> i = listId.iterator();
-	    while(i.hasNext()) {
+	    while(i.hasNext() && !fin) {
 		    Element courant = (Element)i.next();
 		    if(courant.getChild("line").getAttributeValue("shortName").equals(param)){
 		    	resultat = courant.getAttributeValue("dateTime");
-		    	break;
+		    	fin = true;
 		    }
 	    }
 	    return resultat;
